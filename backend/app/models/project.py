@@ -1,22 +1,21 @@
-# Importamos enum para definir valores limitados
-# y controlados para el estado del proyecto.
+# Enum is used to define controlled project status values.
 import enum
 
-# Importamos datetime para los campos de fecha y hora.
-from datetime import datetime
+# date is used for calendar dates.
+# datetime is used for timestamp fields.
+from datetime import date, datetime
 
-# Importamos los tipos de columnas necesarios
-# para construir la tabla projects.
+# SQLAlchemy column types, foreign keys, and database functions.
 from sqlalchemy import Date, DateTime, Enum, ForeignKey, Integer, String, Text, func
 
-# Sintaxis moderna de SQLAlchemy 2.x.
+# SQLAlchemy 2.x typed ORM mapping utilities.
 from sqlalchemy.orm import Mapped, mapped_column
 
-# Base común para todos nuestros modelos.
+# Shared declarative base used by all ServiceHub models.
 from ..database import Base
 
 
-# Definimos los estados permitidos para un proyecto.
+# Lifecycle states supported by a ServiceHub project.
 class ProjectStatus(str, enum.Enum):
     PLANNING = "planning"
     ACTIVE = "active"
@@ -25,67 +24,64 @@ class ProjectStatus(str, enum.Enum):
     CANCELLED = "cancelled"
 
 
-# Modelo que representa un proyecto tecnológico
-# dentro de ServiceHub.
+# Represents a technology project managed within ServiceHub.
 class Project(Base):
 
-    # Nombre de la tabla que se creará en PostgreSQL.
+    # PostgreSQL table name.
     __tablename__ = "projects"
 
-    # Identificador único del proyecto.
+    # Unique identifier for the project.
     id: Mapped[int] = mapped_column(
         Integer,
         primary_key=True,
         index=True,
     )
 
-    # Nombre del proyecto.
+    # Project name.
     name: Mapped[str] = mapped_column(
         String(200),
         nullable=False,
     )
 
-    # Descripción detallada del proyecto.
+    # Optional detailed project description.
     description: Mapped[str | None] = mapped_column(
         Text,
         nullable=True,
     )
 
-    # Usuario responsable o propietario del proyecto.
-    #
-    # Se relaciona con la tabla users.
+    # User responsible for the project.
     owner_id: Mapped[int] = mapped_column(
         ForeignKey("users.id"),
         nullable=False,
     )
 
-    # Estado actual del proyecto.
+    # Current project lifecycle state.
     status: Mapped[ProjectStatus] = mapped_column(
         Enum(ProjectStatus),
         default=ProjectStatus.PLANNING,
         nullable=False,
     )
 
-    # Fecha planeada de inicio.
-    start_date: Mapped[datetime | None] = mapped_column(
+    # Planned project start date.
+    start_date: Mapped[date | None] = mapped_column(
         Date,
         nullable=True,
     )
 
-    # Fecha objetivo de finalización.
-    target_date: Mapped[datetime | None] = mapped_column(
+    # Expected project completion date.
+    target_date: Mapped[date | None] = mapped_column(
         Date,
         nullable=True,
     )
 
-    # Fecha y hora en que se creó el registro.
+    # Timestamp automatically generated when the project is created.
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         nullable=False,
     )
 
-    # Fecha y hora de la última actualización.
+    # Timestamp representing the latest project update.
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),

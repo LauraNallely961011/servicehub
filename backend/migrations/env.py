@@ -1,23 +1,54 @@
+# Logging configuration used by Alembic.
 from logging.config import fileConfig
 
+# Alembic migration context.
 from alembic import context
+
+# SQLAlchemy utilities used to create migration connections.
 from sqlalchemy import engine_from_config, pool
 
+# Import ServiceHub database metadata and connection configuration.
 from app.database import Base, DATABASE_URL
-from app.models import User, Incident  # noqa: F401
+
+# Import all models so their table metadata is registered
+# before Alembic performs schema autogeneration.
+from app.models import (  # noqa: F401
+    ActivityHistory,
+    Comment,
+    Incident,
+    Project,
+    Task,
+    User,
+)
 
 
+# Alembic configuration object loaded from alembic.ini.
 config = context.config
 
+
+# Use the ServiceHub DATABASE_URL instead of a hardcoded
+# connection string inside alembic.ini.
 config.set_main_option("sqlalchemy.url", DATABASE_URL)
 
+
+# Configure Python logging using alembic.ini when available.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
+
+# Alembic compares this metadata against the actual database
+# when generating migrations with --autogenerate.
 target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:
+    """
+    Run migrations without creating a live database connection.
+
+    Alembic generates SQL statements using only the database URL
+    and model metadata.
+    """
+
     url = config.get_main_option("sqlalchemy.url")
 
     context.configure(
@@ -33,12 +64,18 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
+    """
+    Run migrations using an active database connection.
+    """
+
+    # Build a SQLAlchemy engine from the Alembic configuration.
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
 
+    # Open a database connection and attach it to Alembic.
     with connectable.connect() as connection:
         context.configure(
             connection=connection,
@@ -46,10 +83,13 @@ def run_migrations_online() -> None:
             compare_type=True,
         )
 
+        # Execute all pending migration operations
+        # inside a transaction.
         with context.begin_transaction():
             context.run_migrations()
 
 
+# Select the appropriate migration mode.
 if context.is_offline_mode():
     run_migrations_offline()
 else:

@@ -1,22 +1,21 @@
-# Importamos enum para definir valores controlados
-# para el estado y la prioridad de una tarea.
+# Enum is used to define controlled task status and priority values.
 import enum
 
-# Importamos datetime para campos de fecha y hora.
-from datetime import datetime
+# date is used for deadlines.
+# datetime is used for timestamp fields.
+from datetime import date, datetime
 
-# Importamos los tipos de columnas necesarios
-# para construir la tabla tasks.
+# SQLAlchemy column types, foreign keys, and database functions.
 from sqlalchemy import Date, DateTime, Enum, ForeignKey, Integer, String, Text, func
 
-# Sintaxis moderna de SQLAlchemy 2.x.
+# SQLAlchemy 2.x typed ORM mapping utilities.
 from sqlalchemy.orm import Mapped, mapped_column
 
-# Base común para todos los modelos del proyecto.
+# Shared declarative base used by all ServiceHub models.
 from ..database import Base
 
 
-# Estados permitidos para una tarea.
+# Workflow states supported by project tasks.
 class TaskStatus(str, enum.Enum):
     TODO = "to_do"
     IN_PROGRESS = "in_progress"
@@ -24,7 +23,7 @@ class TaskStatus(str, enum.Enum):
     DONE = "done"
 
 
-# Prioridades permitidas para una tarea.
+# Priority levels available for project tasks.
 class TaskPriority(str, enum.Enum):
     LOW = "low"
     MEDIUM = "medium"
@@ -32,74 +31,74 @@ class TaskPriority(str, enum.Enum):
     CRITICAL = "critical"
 
 
-# Modelo que representa una tarea dentro de un proyecto.
+# Represents a task that belongs to a ServiceHub project.
 class Task(Base):
 
-    # Nombre de la tabla en PostgreSQL.
+    # PostgreSQL table name.
     __tablename__ = "tasks"
 
-    # Identificador único de la tarea.
+    # Unique task identifier.
     id: Mapped[int] = mapped_column(
         Integer,
         primary_key=True,
         index=True,
     )
 
-    # Proyecto al que pertenece la tarea.
-    # Se relaciona con projects.id.
+    # Project that contains the task.
     project_id: Mapped[int] = mapped_column(
         ForeignKey("projects.id"),
         nullable=False,
         index=True,
     )
 
-    # Usuario responsable de la tarea.
-    # Puede ser NULL si la tarea aún no ha sido asignada.
+    # User currently responsible for the task.
+    #
+    # Nullable because tasks can exist before assignment.
     assigned_to_id: Mapped[int | None] = mapped_column(
         ForeignKey("users.id"),
         nullable=True,
     )
 
-    # Título corto de la tarea.
+    # Short task title.
     title: Mapped[str] = mapped_column(
         String(200),
         nullable=False,
     )
 
-    # Descripción detallada de la tarea.
+    # Optional detailed task description.
     description: Mapped[str | None] = mapped_column(
         Text,
         nullable=True,
     )
 
-    # Estado actual de la tarea.
+    # Current task workflow state.
     status: Mapped[TaskStatus] = mapped_column(
         Enum(TaskStatus),
         default=TaskStatus.TODO,
         nullable=False,
     )
 
-    # Prioridad de la tarea.
+    # Business priority assigned to the task.
     priority: Mapped[TaskPriority] = mapped_column(
         Enum(TaskPriority),
         default=TaskPriority.MEDIUM,
         nullable=False,
     )
 
-    # Fecha límite de la tarea.
-    due_date: Mapped[datetime | None] = mapped_column(
+    # Optional task deadline.
+    due_date: Mapped[date | None] = mapped_column(
         Date,
         nullable=True,
     )
 
-    # Fecha y hora en que se creó la tarea.
+    # Timestamp automatically generated when the task is created.
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         nullable=False,
     )
 
-    # Fecha y hora de la última actualización.
+    # Timestamp representing the latest task update.
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
