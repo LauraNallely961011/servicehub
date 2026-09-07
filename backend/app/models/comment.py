@@ -1,72 +1,56 @@
-# Importamos datetime para indicar el tipo de dato
-# de los campos de fecha y hora.
+# datetime is used for typed timestamp fields.
 from datetime import datetime
 
-# Importamos los tipos de columnas y funciones
-# que vamos a utilizar desde SQLAlchemy.
+# SQLAlchemy column types, foreign keys, and database functions.
 from sqlalchemy import DateTime, ForeignKey, Integer, Text, func
 
-# Mapped y mapped_column se utilizan para definir
-# las columnas de nuestros modelos con SQLAlchemy 2.x.
+# SQLAlchemy 2.x typed ORM mapping utilities.
 from sqlalchemy.orm import Mapped, mapped_column
 
-# Importamos Base, que es la clase base de todos
-# nuestros modelos de base de datos.
+# Shared declarative base used by all ServiceHub models.
 from ..database import Base
 
 
-# Definimos el modelo Comment.
-# Cada instancia de esta clase representará
-# un comentario almacenado en la tabla "comments".
+# Represents a comment added to an incident.
 class Comment(Base):
 
-    # Nombre real que tendrá la tabla en PostgreSQL.
+    # PostgreSQL table name.
     __tablename__ = "comments"
 
-    # Identificador único del comentario.
-    # primary_key=True lo convierte en la llave primaria.
-    # index=True crea un índice para búsquedas más rápidas.
+    # Unique identifier for the comment.
     id: Mapped[int] = mapped_column(
         Integer,
         primary_key=True,
         index=True,
     )
 
-    # ID del incidente al cual pertenece el comentario.
-    # ForeignKey crea una relación con incidents.id.
+    # Incident associated with this comment.
     incident_id: Mapped[int] = mapped_column(
         ForeignKey("incidents.id"),
         nullable=False,
         index=True,
     )
 
-    # ID del usuario que escribió el comentario.
-    # Está relacionado con users.id.
+    # User who wrote the comment.
     author_id: Mapped[int] = mapped_column(
         ForeignKey("users.id"),
         nullable=False,
     )
 
-    # Texto del comentario.
-    # Usamos Text porque puede contener contenido más largo
-    # que un String tradicional.
+    # Comment body.
     content: Mapped[str] = mapped_column(
         Text,
         nullable=False,
     )
 
-    # Fecha y hora en que se creó el comentario.
-    # PostgreSQL asignará automáticamente la fecha actual
-    # utilizando now().
+    # Timestamp automatically created when the comment is stored.
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         nullable=False,
     )
 
-    # Fecha y hora de la última modificación.
-    # Se crea inicialmente con now() y SQLAlchemy
-    # actualizará el valor cuando el registro sea modificado.
+    # Timestamp updated if the comment changes.
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
